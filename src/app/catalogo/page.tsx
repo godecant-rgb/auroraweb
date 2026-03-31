@@ -1,4 +1,4 @@
-import ProductCard from "@/components/catalogo/ProductCard";
+import CatalogFilters from "@/components/catalogo/CatalogFilters";
 import { getCatalogProducts } from "@/services/products.service";
 
 export const dynamic = "force-dynamic";
@@ -24,17 +24,7 @@ export default async function CatalogoPage() {
           </p>
         </div>
 
-        {products.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-[#DCCCCC] bg-white p-10 text-center text-[#7A7A7A]">
-            No hay productos cargados todavía.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+        <CatalogFilters products={products} />
       </div>
     </main>
   );

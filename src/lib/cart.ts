@@ -38,7 +38,10 @@ export function addItemToCart(items: CartItem[], newItem: CartItem): CartItem[] 
     const updated = [...items];
     updated[existingIndex] = {
       ...updated[existingIndex],
-      quantity: updated[existingIndex].quantity + newItem.quantity,
+      quantity: Math.max(
+        1,
+        updated[existingIndex].quantity + newItem.quantity,
+      ),
     };
     return updated;
   }
@@ -63,7 +66,7 @@ export function updateCartItemQuantity(
   }
 
   return items.map((item) =>
-    item.variantId === variantId ? { ...item, quantity } : item,
+    item.variantId === variantId ? { ...item, quantity: Math.max(1, quantity) } : item,
   );
 }
 

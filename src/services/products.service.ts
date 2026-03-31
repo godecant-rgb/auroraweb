@@ -6,7 +6,7 @@ import type {
   Category,
 } from "@/types/product";
 
-type CatalogProductItem = {
+export type CatalogProductItem = {
   id: string;
   name: string;
   slug: string;
@@ -16,6 +16,8 @@ type CatalogProductItem = {
   category_name: string | null;
   category_slug: string | null;
   is_active: boolean;
+  is_featured: boolean;
+  is_new: boolean;
   created_at: string;
   total_stock: number;
   image_url: string | null;
@@ -57,6 +59,8 @@ type CatalogRow = {
   price: number;
   category_id: string | null;
   is_active: boolean;
+  is_featured: boolean;
+  is_new: boolean;
   created_at: string;
   categories:
     | {
@@ -92,12 +96,14 @@ function normalizeCategory(
 
 function normalizeCatalogCategory(category: CatalogRow["categories"]) {
   if (!category) return { name: null, slug: null };
+
   if (Array.isArray(category)) {
     return {
       name: category[0]?.name ?? null,
       slug: category[0]?.slug ?? null,
     };
   }
+
   return {
     name: category.name ?? null,
     slug: category.slug ?? null,
@@ -117,6 +123,8 @@ export async function getCatalogProducts(): Promise<CatalogProductItem[]> {
       price,
       category_id,
       is_active,
+      is_featured,
+      is_new,
       created_at,
       categories (
         name,
@@ -160,6 +168,8 @@ export async function getCatalogProducts(): Promise<CatalogProductItem[]> {
         category_name: category.name,
         category_slug: category.slug,
         is_active: product.is_active,
+        is_featured: product.is_featured,
+        is_new: product.is_new,
         created_at: product.created_at,
         total_stock: totalStock,
         image_url: sortedImages[0]?.image_url ?? null,
@@ -169,10 +179,11 @@ export async function getCatalogProducts(): Promise<CatalogProductItem[]> {
 }
 
 export async function getFeaturedProducts(
-  limit = 8,
+  limit = 4,
 ): Promise<CatalogProductItem[]> {
   const products = await getCatalogProducts();
-  return products.slice(0, limit);
+  const featured = products.filter((product) => product.is_featured);
+  return (featured.length > 0 ? featured : products).slice(0, limit);
 }
 
 export async function getProductBySlug(

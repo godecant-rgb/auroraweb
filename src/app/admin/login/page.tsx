@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const supabase = getSupabaseBrowserClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,20 +16,33 @@ export default function AdminLoginPage() {
     setErrorMessage("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    setLoading(false);
+      const data = await response.json();
 
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || "No se pudo iniciar sesión.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin/dashboard");
+      router.refresh();
+    } catch {
+      setErrorMessage("No se pudo iniciar sesión.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/admin/pedidos");
-    router.refresh();
   }
 
   return (

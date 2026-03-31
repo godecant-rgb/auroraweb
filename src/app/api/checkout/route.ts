@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { buildWhatsappMessage, buildWhatsappUrl } from "@/lib/whatsapp";
 import { WHATSAPP_PHONE } from "@/lib/constants";
+import { validateCoupon } from "@/services/coupons.service";
 import type { CartItem } from "@/types/cart";
 
 type RequestBody = {
@@ -12,12 +13,13 @@ type RequestBody = {
     notes?: string;
   };
   items: CartItem[];
+  couponCode?: string;
 };
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { customer, items } = body;
+    const { customer, items, couponCode } = body;
 
     if (!customer?.fullName?.trim()) {
       return NextResponse.json(
@@ -61,6 +63,23 @@ export async function POST(request: Request) {
       0,
     );
 
+    const couponResult = couponCode
+      ? await validateCoupon(couponCode, subtotal)
+      : {
+          valid: false,
+          code: undefined,
+          discountAmount: 0,
+          finalTotal: subtotal,
+        };
+
+    const discountAmount = couponResult.valid
+      ? Number(couponResult.discountAmount ?? 0)
+      : 0;
+
+    const totalAmount = couponResult.valid
+      ? Number(couponResult.finalTotal ?? subtotal)
+      : subtotal;
+
     const { data: customerData, error: customerError } = await supabase
       .from("customers")
       .insert({
@@ -84,6 +103,9 @@ export async function POST(request: Request) {
         customer_id: customerData.id,
         status: "pending",
         subtotal,
+        discount_code: couponResult.valid ? couponResult.code : null,
+        discount_amount: discountAmount,
+        total_amount: totalAmount,
         notes: customer.notes?.trim() || null,
         whatsapp_sent: false,
       })
@@ -123,7 +145,7 @@ export async function POST(request: Request) {
     const message = buildWhatsappMessage({
       items,
       customer,
-      subtotal,
+      subtotal: totalAmount,
     });
 
     const whatsappUrl = buildWhatsappUrl(WHATSAPP_PHONE, message);

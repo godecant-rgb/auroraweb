@@ -7,6 +7,9 @@ import type { CheckoutFormData, CheckoutResponse } from "@/types/checkout";
 type CheckoutFormProps = {
   items: CartItem[];
   subtotal: number;
+  couponCode?: string;
+  discountAmount?: number;
+  totalAmount?: number;
   onSuccess?: () => void;
 };
 
@@ -20,6 +23,9 @@ const initialForm: CheckoutFormData = {
 export default function CheckoutForm({
   items,
   subtotal,
+  couponCode,
+  discountAmount = 0,
+  totalAmount,
   onSuccess,
 }: CheckoutFormProps) {
   const [form, setForm] = useState<CheckoutFormData>(initialForm);
@@ -61,6 +67,7 @@ export default function CheckoutForm({
         body: JSON.stringify({
           customer: form,
           items,
+          couponCode: couponCode || undefined,
         }),
       });
 
@@ -147,8 +154,23 @@ export default function CheckoutForm({
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl bg-[#F8F3F1] p-4 text-sm text-[#666666]">
-        Subtotal del pedido: <span className="font-semibold text-[#1F1F1F]">${subtotal}</span>
+      <div className="mt-6 space-y-2 rounded-2xl bg-[#F8F3F1] p-4 text-sm text-[#666666]">
+        <div className="flex items-center justify-between">
+          <span>Subtotal</span>
+          <span>${subtotal}</span>
+        </div>
+
+        {couponCode && discountAmount > 0 && (
+          <div className="flex items-center justify-between">
+            <span>Descuento ({couponCode})</span>
+            <span>- ${discountAmount}</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between font-semibold text-[#1F1F1F]">
+          <span>Total</span>
+          <span>${totalAmount ?? subtotal}</span>
+        </div>
       </div>
 
       {errorMessage && (
